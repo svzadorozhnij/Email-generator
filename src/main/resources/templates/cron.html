@@ -1,0 +1,81 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Work with cron</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+</head>
+<body>
+
+<header th:insert="blocks/header :: header"></header>
+<br>
+<br>
+<br>
+
+
+<div class="container">
+
+    <form action="cron" method="post">
+        <div class="row">
+            <div class="col-sm">
+                <input class="form-control mr-sm-2" value="* * * * * *" type="text"
+                       name="expression"
+                       placeholder="Enter expression to create cron" aria-label="Search" required>
+            </div>
+            <div class="col-sm">
+                <button type="submit" class="btn btn-success">Create new CRON</button>
+            </div>
+        </div>
+    </form>
+    <br>
+
+    <div th:if="${ifCron == 1}">
+        <div class="alert alert-danger" role="alert" th:text="${messageCron}"></div>
+    </div>
+    <br>
+
+    <div class="row">
+        <div class="col-sm"><b>№</b></div>
+        <div class="col-sm"><b>Expression</b></div>
+        <div class="col-sm"><b>Date created</b></div>
+        <div class="col-sm"><b>Change</b></div>
+        <div class="col-sm"><b>Delete</b></div>
+    </div>
+
+    <div th:each="el : ${cronPage}" class="alert alert-into mt-2">
+        <div class="container">
+            <div class="row">
+                <div class="col-sm" th:text="${el.id}"></div>
+                <div class="col-sm" th:text="${el.expression}"></div>
+                <div class="col-sm" th:text="${el.createdOn}"></div>
+                <div class="col-sm">
+                    <a th:href="'/cron/' + ${el.id} + '/edit'" class="btn btn-primary">Change</a>
+                </div>
+                <div class="col-sm">
+                    <a th:href="'/cron/' + ${el.id} + '/delete'" class="btn btn-danger">Delete</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<br>
+
+<footer class="text-muted py-5">
+    <nav aria-label="Page navigation example">
+        <ul class="pagination justify-content-center" th:if="${ifPage == 1}">
+            <li class="page-item disabled" th:each="pageNumber : ${numbers}"
+                th:class="${pageNumber == cronPage.number} ? active">
+
+                <a class="page-link" th:href="@{'/cron?page=' + ${pageNumber}}"
+                   th:text="${pageNumber + 1}"></a>
+
+            </li>
+        </ul>
+    </nav>
+</footer>
+
+
+</body>
+</html>

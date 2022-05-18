@@ -2,11 +2,16 @@ package com.example.Email.generator.controller;
 
 import com.example.Email.generator.entity.User;
 import com.example.Email.generator.repository.UserRepo;
+import com.example.Email.generator.service.MailSender;
+import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,15 +24,8 @@ public class UserController {
 
     @Autowired
     private UserRepo userRepo;
-
-    @GetMapping("/user")
-    public String userMain(Model model) {
-        Iterable<User> allUsers = userRepo.findAll();
-        List<User> result = new ArrayList<>();
-        allUsers.forEach(result::add);
-        model.addAttribute("allUsers", result);
-        return "/user/user";
-    }
+    @Autowired
+    private MailSender mailSender;
 
     @GetMapping("/user/add")
     public String userAdd(Model model) {
@@ -36,47 +34,37 @@ public class UserController {
 
     @PostMapping("/user/add")
     public String userSave(@RequestParam String username, @RequestParam String email, Model model) {
-        User user = new User(username, email, new Date());
-        userRepo.save(user);
+        User user = new User(username, email, new Timestamp(System.currentTimeMillis()));
+        try {
+            userRepo.save(user);
+        } catch (Exception e) {
+            model.addAttribute("if", 1);
+            model.addAttribute("message", "This user is already in the database");
+            return "/user/user-add";
+        }
         return "redirect:/user";
     }
 
-    @GetMapping("/search-user")
-    public String userSearch(@RequestParam String username, Model model) {
-        Iterable<User> allUsers = userRepo.findAll();
-        List<User> res = new ArrayList<>();
-        allUsers.forEach(res::add);
-        if (!username.isEmpty()) {
-            User user = null;
-            for (User el : res) {
-                if (el.getEmail().equalsIgnoreCase(username)) {
-                    user = el;
-                }
-            }
-            model.addAttribute("allUsers", user);
-        } else {
-            model.addAttribute("allUsers", allUsers);
-        }
-        return "/user/user";
-    }
 
-    @GetMapping("/user/search/email")
-    public String userSearchEmail(@RequestParam String email, Model model) {
+    @GetMapping("/search-user")
+    public String userSearch(
+        @RequestParam String param,
+        @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+        @RequestParam(value = "size", required = false, defaultValue = "5") Integer size,
+        Model model)
+    {
         Iterable<User> allUsers = userRepo.findAll();
         List<User> res = new ArrayList<>();
         allUsers.forEach(res::add);
-        if (!email.isEmpty()) {
-            User user = null;
-            for (User el : res) {
-                if (el.getEmail().equalsIgnoreCase(email)) {
-                    user = el;
-                }
+        for (User el : res) {
+            if (el.getEmail().equals(param) ^ el.getUsername().equals(param)) {
+                model.addAttribute("personsPage", el);
+                return "/user/user";
             }
-            model.addAttribute("allUsers", user);
-        } else {
-            model.addAttribute("allUsers", allUsers);
         }
-        return "/user/user";
+        model.addAttribute("ifSearch", 1);
+        model.addAttribute("userNotSearch", param + ": Nothing found");
+        return userMain(page,size,model);
     }
 
     @GetMapping("/user/{id}/edit")
@@ -87,7 +75,7 @@ public class UserController {
         Optional<User> user = userRepo.findById(id);
         ArrayList<User> result = new ArrayList<>();
         user.ifPresent(result::add);
-        model.addAttribute("editUser",result);
+        model.addAttribute("editUser", result);
         return "/user/user-edit";
     }
 
@@ -101,7 +89,6 @@ public class UserController {
         return "redirect:/user";
     }
 
-
     @GetMapping("/user/{id}/delete")
     public String userDelete(@PathVariable(value = "id") Integer id, Model model) {
         if (!userRepo.existsById(id)) {
@@ -109,6 +96,38 @@ public class UserController {
         }
         userRepo.deleteById(id);
         return "redirect:/user";
+    }
+
+    @GetMapping("/user/{id}/email")
+    public String sendMail(
+        @PathVariable(value = "id") Integer id,
+        @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+        @RequestParam(value = "size", required = false, defaultValue = "5") Integer size,
+        Model model)
+    {
+        if (!userRepo.existsById(id)) {
+            return "redirect:/user";
+        }
+        User user = userRepo.findById(id).orElseThrow();
+        mailSender.send(user);
+        model.addAttribute("ifSearch", 1);
+        model.addAttribute("userNotSearch", "Message sent");
+        return userMain(page,size,model);
+    }
+
+    @GetMapping("/user")
+    public String userMain(
+        @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+        @RequestParam(value = "size", required = false, defaultValue = "5") Integer size,
+        Model model)
+    {
+        Page<User> users = userRepo.findAll(
+            PageRequest.of(page, size, Direction.DESC, "createdOn"));
+
+        model.addAttribute("ifPage", 1);
+        model.addAttribute("personsPage", users);
+        model.addAttribute("numbers", IntStream.range(0, users.getTotalPages()).toArray());
+        return "/user/user";
     }
 
 }

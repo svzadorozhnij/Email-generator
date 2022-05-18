@@ -1,6 +1,5 @@
 package com.example.Email.generator.entity;
 
-import com.sun.istack.NotNull;
 import java.sql.Timestamp;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -11,26 +10,21 @@ import lombok.Data;
 
 @Data
 @Entity
-public class User {
+public class Cron {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
-
     @Column(nullable = false, unique = true)
-    private String username;
-    @Column(nullable = false, unique = true)
-    private String  email;
+    private String expression;
+    @Column(nullable = false)
     private Timestamp createdOn;
 
-
-    public User() {
+    public Cron() {
     }
 
-    public User(String username, String email, Timestamp createdOn) {
-        this.username = username;
-        this.email = email;
+    public Cron(String expression, Timestamp createdOn) {
+        this.expression = expression;
         this.createdOn = createdOn;
     }
-
 }

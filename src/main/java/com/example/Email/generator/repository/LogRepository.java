@@ -1,8 +1,8 @@
 package com.example.Email.generator.repository;
 
-import com.example.Email.generator.entity.User;
+import com.example.Email.generator.entity.Log;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface UserRepo extends JpaRepository<User,Integer> {
+public interface LogRepository extends JpaRepository<Log,Integer> {
 
 }

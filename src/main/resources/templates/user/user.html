@@ -23,22 +23,29 @@
         </div>
         <div class="col-sm">
             <form class="form-inline" action="/search-user">
-                <input class="form-control mr-sm-2" type="text" name="username"
-                       placeholder="Username or Email" aria-label="Search">
-                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+                <input class="form-control mr-sm-2" type="text" name="param"
+                       placeholder="Enter username or email and press 'Enter'" aria-label="Search"
+                       required>
             </form>
         </div>
     </div>
     <br>
-    <div class="row">
-        <div class="col-sm">№</div>
-        <div class="col-sm">Username</div>
-        <div class="col-sm">Email</div>
-        <div class="col-sm">Date created</div>
-        <div class="col-sm">Change</div>
-        <div class="col-sm">Delete</div>
+
+    <div th:if="${ifSearch == 1}">
+        <div class="alert alert-warning" role="alert" th:text="${userNotSearch}"></div>
     </div>
-    <div th:each="el : ${allUsers}" class="alert alert-into mt-2">
+    <br>
+
+    <div class="row">
+        <div class="col-sm"><b>№</b></div>
+        <div class="col-sm"><b>Username</b></div>
+        <div class="col-sm"><b>Email</b></div>
+        <div class="col-sm"><b>Date created</b></div>
+        <div class="col-sm"><b>Change user data</b></div>
+        <div class="col-sm"><b>Delete user</b></div>
+        <div class="col-sm"><b>Send message</b></div>
+    </div>
+    <div th:each="el : ${personsPage}" class="alert alert-into mt-2">
         <div class="container">
             <div class="row">
                 <div class="col-sm" th:text="${el.id}"></div>
@@ -51,13 +58,28 @@
                 <div class="col-sm">
                     <a th:href="'/user/' + ${el.id} + '/delete'" class="btn btn-danger">Delete</a>
                 </div>
+                <div class="col-sm">
+                    <a th:href="'/user/' + ${el.id} + '/email'" class="btn btn-outline-success my-2 my-sm-0">Send message</a>
+                </div>
             </div>
         </div>
     </div>
 </div>
 <br>
 
-<footer th:insert="blocks/footer :: footer"></footer>
+<footer class="text-muted py-5">
+    <nav aria-label="Page navigation example">
+        <ul class="pagination justify-content-center" th:if="${ifPage == 1}">
+            <li class="page-item disabled" th:each="pageNumber : ${numbers}"
+            th:class="${pageNumber == personsPage.number} ? active">
+
+                <a class="page-link" th:href="@{'/user?page=' + ${pageNumber}}"
+                th:text="${pageNumber + 1}"></a>
+
+            </li>
+        </ul>
+    </nav>
+</footer>
 
 
 </body>
